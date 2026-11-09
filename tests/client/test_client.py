@@ -323,6 +323,16 @@ def test_client_closed_state_using_implicit_open():
             pass  # pragma: no cover
 
 
+def test_elapsed_available_for_preloaded_transport_response():
+    def handler(request):
+        return httpx.Response(200, content=b"Hello, world!")
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        response = client.get("http://example.com")
+
+    assert response.elapsed >= timedelta(0)
+
+
 def test_client_closed_state_using_with_block():
     with httpx.Client(transport=httpx.MockTransport(hello_world)) as client:
         assert not client.is_closed

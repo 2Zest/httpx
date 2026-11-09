@@ -278,6 +278,17 @@ async def test_client_closed_state_using_implicit_open():
 
 
 @pytest.mark.anyio
+async def test_elapsed_available_for_preloaded_transport_response():
+    def handler(request):
+        return httpx.Response(200, content=b"Hello, world!")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        response = await client.get("http://example.com")
+
+    assert response.elapsed >= timedelta(0)
+
+
+@pytest.mark.anyio
 async def test_client_closed_state_using_with_block():
     async with httpx.AsyncClient(transport=httpx.MockTransport(hello_world)) as client:
         assert not client.is_closed

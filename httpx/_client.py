@@ -1015,6 +1015,13 @@ class Client(BaseClient):
 
         assert isinstance(response.stream, SyncByteStream)
 
+        # Responses returned with an already-buffered body do not traverse the
+        # bound stream, so there is no later close hook to populate ``elapsed``.
+        # Record the transport round-trip time here while preserving an
+        # explicitly supplied value from a custom transport.
+        if hasattr(response, "_content") and not hasattr(response, "_elapsed"):
+            response.elapsed = datetime.timedelta(seconds=time.perf_counter() - start)
+
         response.request = request
         response.stream = BoundSyncStream(
             response.stream, response=response, start=start
@@ -1730,6 +1737,14 @@ class AsyncClient(BaseClient):
             response = await transport.handle_async_request(request)
 
         assert isinstance(response.stream, AsyncByteStream)
+
+        # Responses returned with an already-buffered body do not traverse the
+        # bound stream, so there is no later close hook to populate ``elapsed``.
+        # Record the transport round-trip time here while preserving an
+        # explicitly supplied value from a custom transport.
+        if hasattr(response, "_content") and not hasattr(response, "_elapsed"):
+            response.elapsed = datetime.timedelta(seconds=time.perf_counter() - start)
+
         response.request = request
         response.stream = BoundAsyncStream(
             response.stream, response=response, start=start
